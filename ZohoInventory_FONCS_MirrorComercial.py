@@ -12,11 +12,11 @@ import pypyodbc as odbc # pip install pypyodbc
 
 # Credenciales para conectarse con Comercial FOM
 DRIVER_NAME = 'Sql Server'
-SERVER_NAME = '172.16.100.14\COMERCIAL2019'
-DATABASE_NAME = 'adFIBER_OPTIC_NETWORK'
-DATABASE_NAME_WO = 'adWO_MAN_COM'
-UID_NAME = 'sa'
-PWD_NAME = 'Chesse2389'
+SERVER_NAME = ''
+DATABASE_NAME = ''
+DATABASE_NAME_WO = ''
+UID_NAME = ''
+PWD_NAME = ''
 
 # Configuración de las credenciales de Google Sheets
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
