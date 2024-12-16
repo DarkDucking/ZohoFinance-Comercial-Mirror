@@ -23,13 +23,13 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 SERVICE_ACCOUNT_FILE = 'prueba-api-python.json'  # Ruta al archivo de credenciales JSON
 
 # Configuración de las credenciales de Zoho Inventory
-ZOHO_CLIENT_ID = '1000.FIUHTDW4J4UMO8USPVVNSJDJL8S4AQ'
-ZOHO_CLIENT_SECRET = '8ad548c60b1bb613f0c09dcb953322fcb5675cbd2c'
-ZOHO_REFRESH_TOKEN = '1000.8b3eb4081b97823a6ae1b965c6229323.2d198eab2170def63d01a17c3fcd7b32'
-ZOHO_ORG_ID = '856825010'
+ZOHO_CLIENT_ID = ''
+ZOHO_CLIENT_SECRET = ''
+ZOHO_REFRESH_TOKEN = ''
+ZOHO_ORG_ID = ''
 
-# ID de la hoja de 1WjI-RDgwnHTpVgz3nD7lXV621a-de4pHD1oE6LkRFzs cálculo
-SPREADSHEET_ID = '1WjI-RDgwnHTpVgz3nD7lXV621a-de4pHD1oE6LkRFzs'
+# ID de la hoja de  cálculo
+SPREADSHEET_ID = ''
 
 # Autenticar y autorizar acceso a Google Sheets
 creds = None
@@ -75,104 +75,7 @@ def sql_query_foncs():
     else: 
         # Declaracion de query
         sql_query = """
-        SELECT      
-            CASE
-                WHEN TABLA1.CCODIGOALMACEN = 'CEDISLTX' THEN '5371960000000121010'
-            END AS [Almacen],  
-            TABLA1.CCODIGOPRODUCTO AS [SKU],
-            TABLA1.CNOMBREPRODUCTO AS [Name],
-            U.CABREVIATURA AS [Unit],
-            TABLA1.CPRECIO2 AS [Price],
-            TABLA1.EXISTENCIA AS [Stock],       
-            TABLA1.LOTE AS [Batch],     
-            TABLA1.CNUMEROSERIE AS [Serial],
-            TABLA1.CDESCRIPCIONPRODUCTO AS [Descripcion],     
-            AJUSTE = 0
-
-        FROM (     
-            -- Primera subconsulta
-            SELECT           
-                dbo.admProductos.CCODIGOPRODUCTO,       
-                dbo.admProductos.CNOMBREPRODUCTO,        
-                CAST(dbo.admProductos.CDESCRIPCIONPRODUCTO AS VARCHAR(MAX)) AS CDESCRIPCIONPRODUCTO,      
-                dbo.admProductos.CIDUNIDADBASE,
-                dbo.admProductos.CPRECIO2,
-                dbo.admAlmacenes.CCODIGOALMACEN,              
-                dbo.admNumerosSerie.CPEDIMENTO,       
-                '' AS [LOTE],        
-                dbo.admNumerosSerie.CNUMEROSERIE,
-                1 AS EXISTENCIA
-            FROM dbo.admProductos      
-            FULL OUTER JOIN dbo.admNumerosSerie 
-                ON dbo.admProductos.CIDPRODUCTO = dbo.admNumerosSerie.CIDPRODUCTO
-            FULL OUTER JOIN dbo.admAlmacenes 
-                ON dbo.admNumerosSerie.CIDALMACEN = dbo.admAlmacenes.CIDALMACEN 
-            WHERE (dbo.admProductos.CTIPOPRODUCTO = 1) AND (dbo.admNumerosSerie.CESTADO < 3)   
-
-            UNION     
-
-            -- Segunda subconsulta
-            SELECT        
-                dbo.admProductos.CCODIGOPRODUCTO,      
-                dbo.admProductos.CNOMBREPRODUCTO,      
-                CAST(dbo.admProductos.CDESCRIPCIONPRODUCTO AS VARCHAR(MAX)) AS CDESCRIPCIONPRODUCTO,   
-                dbo.admProductos.CIDUNIDADBASE,    
-                dbo.admProductos.CPRECIO2, 
-                dbo.admAlmacenes.CCODIGOALMACEN,               
-                dbo.admCapasProducto.CPEDIMENTO,      
-                dbo.admCapasProducto.CNUMEROLOTE,      
-                '' AS [SERIE],     
-                SUM(ISNULL(dbo.admCapasProducto.CEXISTENCIA, 0)) AS EXISTENCIA
-            FROM dbo.admCapasProducto    
-            FULL OUTER JOIN dbo.admAlmacenes 
-                ON dbo.admCapasProducto.CIDALMACEN = dbo.admAlmacenes.CIDALMACEN   
-            FULL OUTER JOIN dbo.admProductos 
-                ON dbo.admCapasProducto.CIDPRODUCTO = dbo.admProductos.CIDPRODUCTO 
-            WHERE (dbo.admProductos.CTIPOPRODUCTO = 1) 
-                AND (dbo.admProductos.CSTATUSPRODUCTO = 1) 
-                AND (dbo.admCapasProducto.CEXISTENCIA > 0)  
-            GROUP BY        
-                dbo.admProductos.CCODIGOPRODUCTO,       
-                dbo.admProductos.CNOMBREPRODUCTO,      
-                dbo.admProductos.CIDUNIDADBASE,          
-                dbo.admAlmacenes.CCODIGOALMACEN,                 
-                dbo.admCapasProducto.CPEDIMENTO,        
-                dbo.admCapasProducto.CNUMEROLOTE, 
-                dbo.admProductos.CPRECIO2,
-                CAST(dbo.admProductos.CDESCRIPCIONPRODUCTO AS VARCHAR(MAX))
-
-            UNION      
-
-            SELECT          
-                dbo.admProductos.CCODIGOPRODUCTO,    
-                dbo.admProductos.CNOMBREPRODUCTO,      
-                CAST(dbo.admProductos.CDESCRIPCIONPRODUCTO AS VARCHAR(MAX)) AS CDESCRIPCIONPRODUCTO,    
-                dbo.admProductos.CIDUNIDADBASE,
-                dbo.admProductos.CPRECIO2,
-                dbo.admAlmacenes.CCODIGOALMACEN,                   
-                '' AS PEDIMENTO,           
-                '' AS LOTE,             
-                '' AS [SERIE],
-                ROUND(ISNULL((SELECT SUM(CASE WHEN cAfectaExistencia = 1 THEN cUnidades ELSE 0 END)          
-                            - SUM(CASE WHEN cAfectaExistencia = 2 THEN cUnidades ELSE 0 END) AS Expr1     
-                            FROM dbo.admMovimientos                      
-                            LEFT OUTER JOIN dbo.admProductos AS p 
-                            ON dbo.admMovimientos.CIDPRODUCTO = p.CIDPRODUCTO 
-                            WHERE (dbo.admMovimientos.CIDALMACEN = dbo.admAlmacenes.CIDALMACEN)              
-                            AND (dbo.admMovimientos.CIDPRODUCTO = dbo.admProductos.CIDPRODUCTO)            
-                            AND (dbo.admMovimientos.CFECHA < GETDATE())                        
-                            AND (dbo.admMovimientos.CAFECTADOINVENTARIO <> 0)), 0.0), 5, 0) AS EXISTENCIA
-            FROM dbo.admProductos          
-            CROSS JOIN dbo.admAlmacenes          
-            WHERE (dbo.admProductos.CSTATUSPRODUCTO = 1)         
-                AND (dbo.admProductos.CTIPOPRODUCTO = 1)      
-                AND (dbo.admProductos.CCONTROLEXISTENCIA < 4)     
-        ) AS TABLA1 
-        INNER JOIN dbo.admUnidadesMedidaPeso AS U 
-            ON U.CIDUNIDAD = TABLA1.CIDUNIDADBASE 
-        WHERE (TABLA1.CCODIGOALMACEN LIKE 'CEDISLTX')
-            AND TABLA1.CPRECIO2 <> 0
-            AND TABLA1.CCODIGOPRODUCTO NOT LIKE 'Z%'
+        
         """
         # Se ejecuta la query
         cursor = conn.cursor()
@@ -203,109 +106,7 @@ def sql_query_wo():
     else: 
         # Declaracion de query
         sql_query = """
-        SELECT      
-            CASE
-                WHEN TABLA1.CCODIGOALMACEN = '999' THEN '5371960000000121036'
-            END AS [Almacen],   
-            TABLA1.CCODIGOPRODUCTO AS [SKU],
-            TABLA1.CNOMBREPRODUCTO AS [Name],
-            U.CABREVIATURA AS [Unit],
-            TABLA1.CPRECIO2 AS [Price],
-            TABLA1.EXISTENCIA AS [Stock],       
-            TABLA1.LOTE AS [Batch],     
-            TABLA1.CNUMEROSERIE AS [Serial],     
-            TABLA1.CCLAVESAT AS [SAT code],
-            U.CCLAVESAT AS [SAT unit],
-            AJUSTE = 0
-
-            FROM (     
-                -- Primera subconsulta
-                SELECT           
-                    dbo.admProductos.CCODIGOPRODUCTO,       
-                    dbo.admProductos.CNOMBREPRODUCTO,        
-                    CAST(dbo.admProductos.CDESCRIPCIONPRODUCTO AS VARCHAR(MAX)) AS CDESCRIPCIONPRODUCTO,      
-                    dbo.admProductos.CIDUNIDADBASE,
-                    dbo.admProductos.CPRECIO2,
-                    dbo.admAlmacenes.CCODIGOALMACEN,              
-                    dbo.admNumerosSerie.CPEDIMENTO,       
-                    '' AS [LOTE],        
-                    dbo.admNumerosSerie.CNUMEROSERIE,
-                    1 AS EXISTENCIA,  
-                    dbo.admProductos.CCLAVESAT
-                FROM dbo.admProductos      
-                FULL OUTER JOIN dbo.admNumerosSerie 
-                    ON dbo.admProductos.CIDPRODUCTO = dbo.admNumerosSerie.CIDPRODUCTO
-                FULL OUTER JOIN dbo.admAlmacenes 
-                    ON dbo.admNumerosSerie.CIDALMACEN = dbo.admAlmacenes.CIDALMACEN 
-                WHERE (dbo.admProductos.CTIPOPRODUCTO = 1) AND (dbo.admNumerosSerie.CESTADO < 3)   
-
-                UNION     
-
-                -- Segunda subconsulta
-                SELECT        
-                    dbo.admProductos.CCODIGOPRODUCTO,      
-                    dbo.admProductos.CNOMBREPRODUCTO,      
-                    CAST(dbo.admProductos.CDESCRIPCIONPRODUCTO AS VARCHAR(MAX)) AS CDESCRIPCIONPRODUCTO,   
-                    dbo.admProductos.CIDUNIDADBASE,    
-                    dbo.admProductos.CPRECIO2, 
-                    dbo.admAlmacenes.CCODIGOALMACEN,               
-                    dbo.admCapasProducto.CPEDIMENTO,      
-                    dbo.admCapasProducto.CNUMEROLOTE,      
-                    '' AS [SERIE],     
-                    SUM(ISNULL(dbo.admCapasProducto.CEXISTENCIA, 0)) AS EXISTENCIA, 
-                    dbo.admProductos.CCLAVESAT
-                FROM dbo.admCapasProducto    
-                FULL OUTER JOIN dbo.admAlmacenes 
-                    ON dbo.admCapasProducto.CIDALMACEN = dbo.admAlmacenes.CIDALMACEN   
-                FULL OUTER JOIN dbo.admProductos 
-                    ON dbo.admCapasProducto.CIDPRODUCTO = dbo.admProductos.CIDPRODUCTO 
-                WHERE (dbo.admProductos.CTIPOPRODUCTO = 1) 
-                    AND (dbo.admProductos.CSTATUSPRODUCTO = 1) 
-                    AND (dbo.admCapasProducto.CEXISTENCIA > 0)  
-                GROUP BY        
-                    dbo.admProductos.CCODIGOPRODUCTO,       
-                    dbo.admProductos.CNOMBREPRODUCTO,      
-                    dbo.admProductos.CIDUNIDADBASE,          
-                    dbo.admAlmacenes.CCODIGOALMACEN,                 
-                    dbo.admCapasProducto.CPEDIMENTO,        
-                    dbo.admCapasProducto.CNUMEROLOTE, 
-                    dbo.admProductos.CPRECIO2,
-                    CAST(dbo.admProductos.CDESCRIPCIONPRODUCTO AS VARCHAR(MAX)),
-                    dbo.admProductos.CCLAVESAT
-
-                UNION      
-
-                SELECT          
-                    dbo.admProductos.CCODIGOPRODUCTO,    
-                    dbo.admProductos.CNOMBREPRODUCTO,      
-                    CAST(dbo.admProductos.CDESCRIPCIONPRODUCTO AS VARCHAR(MAX)) AS CDESCRIPCIONPRODUCTO,    
-                    dbo.admProductos.CIDUNIDADBASE,
-                    dbo.admProductos.CPRECIO2,
-                    dbo.admAlmacenes.CCODIGOALMACEN,                   
-                    '' AS PEDIMENTO,           
-                    '' AS LOTE,             
-                    '' AS [SERIE],
-                    ROUND(ISNULL((SELECT SUM(CASE WHEN cAfectaExistencia = 1 THEN cUnidades ELSE 0 END)          
-                                - SUM(CASE WHEN cAfectaExistencia = 2 THEN cUnidades ELSE 0 END) AS Expr1     
-                                FROM dbo.admMovimientos                      
-                                LEFT OUTER JOIN dbo.admProductos AS p 
-                                ON dbo.admMovimientos.CIDPRODUCTO = p.CIDPRODUCTO 
-                                WHERE (dbo.admMovimientos.CIDALMACEN = dbo.admAlmacenes.CIDALMACEN)              
-                                AND (dbo.admMovimientos.CIDPRODUCTO = dbo.admProductos.CIDPRODUCTO)            
-                                AND (dbo.admMovimientos.CFECHA < GETDATE())                        
-                                AND (dbo.admMovimientos.CAFECTADOINVENTARIO <> 0)), 0.0), 5, 0) AS EXISTENCIA,
-                    dbo.admProductos.CCLAVESAT
-                FROM dbo.admProductos          
-                CROSS JOIN dbo.admAlmacenes          
-                WHERE (dbo.admProductos.CSTATUSPRODUCTO = 1)         
-                    AND (dbo.admProductos.CTIPOPRODUCTO = 1)      
-                    AND (dbo.admProductos.CCONTROLEXISTENCIA < 4)     
-            ) AS TABLA1 
-            INNER JOIN dbo.admUnidadesMedidaPeso AS U 
-                ON U.CIDUNIDAD = TABLA1.CIDUNIDADBASE 
-        WHERE
-        TABLA1.EXISTENCIA > 0
-        AND TABLA1.CCODIGOALMACEN LIKE '999'
+        
         """
         # Se ejecuta la query
         cursor = conn.cursor()
@@ -335,14 +136,7 @@ def sql_query_priceList():
     else: 
         # Declaracion de query
         sql_query = """
-            Select CCODIGOPRODUCTO,
-            CNOMBREPRODUCTO,
-            CPRECIO2,
-            CPRECIO5,
-            CPRECIO8
-            from admProductos 
-            WHERE CPRECIO2 <> 0
-            AND CCODIGOPRODUCTO NOT LIKE 'Z%';
+            
             """
         
         # Se ejecuta la query
